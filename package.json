@@ -1,0 +1,12 @@
+{
+  "name": "commercial-ops-diagnostic",
+  "version": "1.0.0",
+  "description": "Commercial Ops Diagnostic Tool",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
