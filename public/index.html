@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commercial Ops Diagnostic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0c;
+    --paper: #f5f0e8;
+    --cream: #ede8dc;
+    --gold: #c8973a;
+    --gold-light: #e8b85a;
+    --rust: #b84a2a;
+    --forest: #2a4a35;
+    --muted: #7a7060;
+    --border: #d4cfc4;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  .app { max-width: 720px; margin: 0 auto; padding: 56px 32px 80px; }
+
+  /* ── Header ── */
+  .header { margin-bottom: 52px; padding-bottom: 36px; border-bottom: 1px solid var(--border); }
+
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 14px;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(30px, 5.5vw, 46px);
+    line-height: 1.08; color: var(--ink); margin-bottom: 18px;
+  }
+
+  h1 em { font-style: italic; color: var(--rust); }
+
+  .subtitle {
+    font-size: 15px; color: var(--muted);
+    line-height: 1.65; max-width: 500px; font-weight: 300;
+  }
+
+  .subtitle strong { font-weight: 500; color: var(--ink); }
+
+  /* ── Form ── */
+  .form-section { margin-bottom: 44px; }
+
+  .step-label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 20px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+
+  .field-group { margin-bottom: 28px; }
+
+  .field-label { font-size: 15px; font-weight: 500; color: var(--ink); margin-bottom: 5px; line-height: 1.4; }
+  .field-hint { font-size: 12px; color: var(--muted); margin-bottom: 11px; font-weight: 300; }
+
+  select, textarea {
+    width: 100%; background: white; border: 1px solid var(--border);
+    border-radius: 4px; padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink);
+    outline: none; transition: border-color 0.2s; appearance: none;
+  }
+
+  select:focus, textarea:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(200,151,58,0.12);
+  }
+
+  textarea { resize: vertical; min-height: 96px; line-height: 1.55; }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7060' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+    padding-right: 40px; cursor: pointer;
+  }
+
+  .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .pill { cursor: pointer; }
+  .pill input { display: none; }
+  .pill span {
+    display: block; padding: 8px 16px;
+    border: 1px solid var(--border); border-radius: 100px;
+    font-size: 13px; color: var(--muted); background: white;
+    transition: all 0.15s; white-space: nowrap; user-select: none;
+  }
+  .pill input:checked + span { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .pill:hover span { border-color: var(--gold); color: var(--ink); }
+
+  .char-count { font-size: 11px; color: var(--muted); text-align: right; margin-top: 5px; font-family: 'DM Mono', monospace; }
+
+  /* ── Submit ── */
+  .submit-btn {
+    width: 100%; padding: 17px 24px;
+    background: var(--ink); color: var(--paper);
+    border: none; border-radius: 4px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; transition: background 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    letter-spacing: 0.01em;
+  }
+  .submit-btn:hover { background: var(--forest); }
+  .submit-btn .arrow { display: inline-block; transition: transform 0.2s; }
+  .submit-btn:hover .arrow { transform: translateX(5px); }
+
+  .error-msg {
+    margin-top: 14px; padding: 14px 16px;
+    background: #fff0f0; border: 1px solid #f0c0c0;
+    border-radius: 4px; font-size: 13px; color: var(--rust);
+    display: none;
+  }
+
+  /* ── Loading ── */
+  .loading-state { display: none; text-align: center; padding: 72px 0; }
+  .loading-state.active { display: block; }
+
+  .loader-ring {
+    width: 42px; height: 42px;
+    border: 2px solid var(--cream); border-top-color: var(--gold);
+    border-radius: 50%; animation: spin 0.85s linear infinite;
+    margin: 0 auto 22px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; }
+
+  .loading-steps { margin-top: 20px; display: flex; flex-direction: column; gap: 9px; align-items: center; }
+  .loading-step { font-size: 13px; color: var(--muted); opacity: 0; transition: opacity 0.6s; font-weight: 300; font-style: italic; }
+  .loading-step.visible { opacity: 1; }
+
+  /* ── Results ── */
+  .results { display: none; }
+  .results.active { display: block; animation: fadeUp 0.45s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .results-header {
+    background: var(--ink); color: var(--paper);
+    padding: 30px 34px; border-radius: 4px 4px 0 0;
+  }
+  .results-header .eyebrow { color: var(--gold-light); margin-bottom: 10px; }
+  .results-header h2 { font-family: 'DM Serif Display', serif; font-size: 23px; line-height: 1.2; margin-bottom: 6px; }
+  .results-header .meta { font-size: 11px; color: rgba(245,240,232,0.45); font-family: 'DM Mono', monospace; }
+
+  .results-body {
+    background: white; border: 1px solid var(--border);
+    border-top: none; border-radius: 0 0 4px 4px; padding: 34px;
+  }
+
+  .section-block { margin-bottom: 30px; }
+
+  .section-title {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .section-content { font-size: 14px; line-height: 1.78; color: var(--ink); }
+
+  .priority-item {
+    display: flex; gap: 14px; margin-bottom: 14px;
+    padding: 14px 16px; background: var(--cream);
+    border-radius: 4px; border-left: 3px solid var(--gold);
+  }
+  .priority-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gold); font-weight: 500; min-width: 18px; padding-top: 2px; }
+  .priority-text { font-size: 13px; line-height: 1.65; color: var(--ink); }
+  .priority-text strong { display: block; margin-bottom: 3px; font-size: 14px; }
+
+  .impact-badge {
+    display: inline-block; margin-top: 7px;
+    padding: 3px 11px; background: var(--forest); color: white;
+    border-radius: 100px; font-size: 11px; font-family: 'DM Mono', monospace;
+  }
+
+  .warning-box {
+    padding: 15px 17px; background: #fff8f0;
+    border: 1px solid #e8c89a; border-radius: 4px;
+    font-size: 13px; line-height: 1.65; color: #7a5020;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 28px 0; }
+
+  .restart-btn {
+    margin-top: 30px; padding: 12px 22px;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 4px; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.15s;
+  }
+  .restart-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--muted); font-weight: 300; line-height: 1.6;
+  }
+
+  @media (max-width: 560px) {
+    .app { padding: 36px 20px 60px; }
+    .results-header { padding: 22px 22px; }
+    .results-body { padding: 24px 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- FORM -->
+  <div id="formView">
+    <div class="header">
+      <div class="eyebrow">Commercial Ops Diagnostic</div>
+      <h1>Where is your<br><em>revenue engine</em> leaking?</h1>
+      <p class="subtitle">
+        Built on a framework used across <strong>PE-backed turnarounds</strong> and <strong>high-growth startups</strong> — assess unit economics, isolate the lever, connect it to financial impact.
+      </p>
+    </div>
+
+    <div class="form-section">
+      <span class="step-label">01 — Your Org</span>
+
+      <div class="field-group">
+        <div class="field-label">Annual revenue (approximate)</div>
+        <div class="field-hint">Calibrates the complexity and stakes of recommendations</div>
+        <select id="revenue">
+          <option value="">Select a range</option>
+          <option>Pre-revenue / early stage</option>
+          <option>Under $5M</option>
+          <option>$5M – $25M</option>
+          <option>$25M – $100M</option>
+          <option>$100M – $500M</option>
+          <option>$500M+</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Company stage / ownership type</div>
+        <div class="pill-group">
+          <label class="pill"><input type="radio" name="stage" value="Seed or Series A startup"><span>Seed / Series A</span></label>
+          <label class="pill"><input type="radio" name="stage" value="Series B or C startup scaling GTM"><span>Series B / C</span></label>
+          <label class="pill"><input type="radio" name="stage" value="Growth-stage or Series D+ company"><span>Series D+</span></label>
+          <label class="pill"><input type="radio" name="stage" value="PE-backed company — value creation phase"><span>PE-backed</span></label>
+          <label class="pill"><input type="radio" name="stage" value="PE-backed company — post-acquisition integration"><span>PE post-acquisition</span></label>
+          <label class="pill"><input type="radio" name="stage" value="Bootstrapped or private company"><span>Bootstrapped</span></label>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Primary GTM motion</div>
+        <div class="pill-group">
+          <label class="pill"><input type="radio" name="gtm" value="Enterprise B2B / complex sales"><span>Enterprise B2B</span></label>
+          <label class="pill"><input type="radio" name="gtm" value="Mid-market or SMB sales"><span>Mid-market / SMB</span></label>
+          <label class="pill"><input type="radio" name="gtm" value="Product-led growth (PLG)"><span>PLG</span></label>
+          <label class="pill"><input type="radio" name="gtm" value="Channel or partnerships"><span>Channel / partnerships</span></label>
+          <label class="pill"><input type="radio" name="gtm" value="Field or territory-based sales"><span>Field / territory</span></label>
+          <label class="pill"><input type="radio" name="gtm" value="Usage-based or consumption model"><span>Usage-based</span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <span class="step-label">02 — The Pain</span>
+
+      <div class="field-group">
+        <div class="field-label">Where does the commercial engine feel most broken?</div>
+        <div class="field-hint">Select all that apply</div>
+        <div class="pill-group">
+          <label class="pill"><input type="checkbox" name="pain" value="No reliable forecast or pipeline visibility"><span>No reliable forecast</span></label>
+          <label class="pill"><input type="checkbox" name="pain" value="Reps not focused on right accounts or activities"><span>Wrong rep focus</span></label>
+          <label class="pill"><input type="checkbox" name="pain" value="High churn or poor net retention"><span>High churn / low NRR</span></label>
+          <label class="pill"><input type="checkbox" name="pain" value="Pricing pressure or margin erosion"><span>Margin erosion</span></label>
+          <label class="pill"><input type="checkbox" name="pain" value="No data visibility — operating blind"><span>Operating blind</span></label>
+          <label class="pill"><input type="checkbox" name="pain" value="Comp plans misaligned to strategy"><span>Misaligned comp plans</span></label>
+          <label class="pill"><input type="checkbox" name="pain" value="Too many tools, no system of record"><span>Tool sprawl</span></label>
+          <label class="pill"><input type="checkbox" name="pain" value="Territory or coverage gaps"><span>Coverage gaps</span></label>
+          <label class="pill"><input type="checkbox" name="pain" value="Post-acquisition integration chaos"><span>Integration chaos</span></label>
+          <label class="pill"><input type="checkbox" name="pain" value="Sales cycle too long or unpredictable"><span>Long / unpredictable cycles</span></label>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Describe the situation in your own words</div>
+        <div class="field-hint">The messier and more specific, the better the diagnosis</div>
+        <textarea id="situation" maxlength="700" oninput="document.getElementById('cc').textContent=this.value.length" placeholder="e.g. We just closed a Series B and hired 15 reps fast. Pipeline looks full but deals keep slipping. Nobody trusts the Salesforce data. Board wants a forecast in 30 days and I don't know where to start.&#10;&#10;Or: We're 6 months post-acquisition. The commercial org is fragmented across 3 legacy businesses, each with different tools and comp plans. Leadership wants a unified go-to-market but there's no shared data layer."></textarea>
+        <div class="char-count"><span id="cc">0</span>/700</div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <span class="step-label">03 — Your Constraints</span>
+
+      <div class="field-group">
+        <div class="field-label">Team size dedicated to commercial ops / RevOps</div>
+        <div class="pill-group">
+          <label class="pill"><input type="radio" name="team" value="Just me — team of 1"><span>Just me</span></label>
+          <label class="pill"><input type="radio" name="team" value="Small team (2–4 people)"><span>2–4 people</span></label>
+          <label class="pill"><input type="radio" name="team" value="Mid-size team (5–10 people)"><span>5–10 people</span></label>
+          <label class="pill"><input type="radio" name="team" value="Larger team (10+)"><span>10+ people</span></label>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Biggest constraint right now?</div>
+        <div class="pill-group">
+          <label class="pill"><input type="radio" name="constraint" value="No bandwidth — I'm underwater"><span>No bandwidth</span></label>
+          <label class="pill"><input type="radio" name="constraint" value="No buy-in from leadership or the board"><span>No leadership buy-in</span></label>
+          <label class="pill"><input type="radio" name="constraint" value="No clean data to work with"><span>No clean data</span></label>
+          <label class="pill"><input type="radio" name="constraint" value="No budget to invest in tools or headcount"><span>No budget</span></label>
+          <label class="pill"><input type="radio" name="constraint" value="Change fatigue across the team"><span>Change fatigue</span></label>
+          <label class="pill"><input type="radio" name="constraint" value="Pressure to show results fast (board / PE timeline)"><span>Pressure to show results fast</span></label>
+        </div>
+      </div>
+    </div>
+
+    <button class="submit-btn" onclick="runDiagnostic()">
+      Run the diagnostic <span class="arrow">→</span>
+    </button>
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="footer">
+      Built on a framework developed across PE-backed turnarounds and venture-backed growth stages. Free to use. No signup required.
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-state" id="loadingView">
+    <div class="loader-ring"></div>
+    <div class="loading-label">Analyzing your situation</div>
+    <div class="loading-steps">
+      <div class="loading-step" id="ls1">Mapping metrics to unit economics...</div>
+      <div class="loading-step" id="ls2">Identifying highest-leverage lever...</div>
+      <div class="loading-step" id="ls3">Connecting ops moves to financial impact...</div>
+      <div class="loading-step" id="ls4">Building your prioritized roadmap...</div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results" id="resultsView">
+    <div class="results-header">
+      <div class="eyebrow">Your Diagnosis</div>
+      <h2 id="rTitle"></h2>
+      <div class="meta" id="rMeta"></div>
+    </div>
+    <div class="results-body">
+      <div id="rOutput"></div>
+      <button class="restart-btn" onclick="restart()">← Run another diagnostic</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+async function runDiagnostic() {
+  const data = {
+    revenue: document.getElementById('revenue').value,
+    stage: document.querySelector('input[name="stage"]:checked')?.value || '',
+    gtm: document.querySelector('input[name="gtm"]:checked')?.value || '',
+    pains: [...document.querySelectorAll('input[name="pain"]:checked')].map(e => e.value),
+    situation: document.getElementById('situation').value.trim(),
+    team: document.querySelector('input[name="team"]:checked')?.value || '',
+    constraint: document.querySelector('input[name="constraint"]:checked')?.value || ''
+  };
+
+  const errEl = document.getElementById('errorMsg');
+  errEl.style.display = 'none';
+
+  if (!data.revenue) { showErr('Please select your revenue range.'); return; }
+  if (!data.stage) { showErr('Please select your company stage.'); return; }
+  if (!data.situation) { showErr('Please describe your situation — the more specific, the better.'); return; }
+
+  document.getElementById('formView').style.display = 'none';
+  document.getElementById('loadingView').classList.add('active');
+
+  ['ls1','ls2','ls3','ls4'].forEach((id, i) => {
+    setTimeout(() => document.getElementById(id).classList.add('visible'), i * 1000);
+  });
+
+  try {
+    const res = await fetch('/api/diagnose', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data })
+    });
+
+    const json = await res.json();
+    if (!res.ok || json.error) throw new Error(json.error || 'Unknown error');
+
+    render(json.result, data);
+  } catch(e) {
+    document.getElementById('loadingView').classList.remove('active');
+    document.getElementById('formView').style.display = 'block';
+    showErr('Something went wrong: ' + e.message);
+  }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function render(d, data) {
+  document.getElementById('loadingView').classList.remove('active');
+  document.getElementById('rTitle').textContent = d.headline || 'Your Diagnostic';
+  document.getElementById('rMeta').textContent = [data.stage, data.revenue].filter(Boolean).join(' · ');
+
+  const html = `
+    <div class="section-block">
+      <div class="section-title">Primary Lever</div>
+      <div class="section-content">${esc(d.primary_lever)}</div>
+    </div>
+    <div class="divider"></div>
+    <div class="section-block">
+      <div class="section-title">Prioritized Roadmap</div>
+      ${(d.priorities||[]).map(p => `
+        <div class="priority-item">
+          <div class="priority-num">${p.rank}</div>
+          <div class="priority-text">
+            <strong>${esc(p.action)}</strong>
+            ${esc(p.why_now)}
+            <span class="impact-badge">↑ ${esc(p.impact)}</span>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="divider"></div>
+    <div class="section-block">
+      <div class="section-title">Change Management Risk</div>
+      <div class="warning-box">⚠ ${esc(d.change_management_warning)}</div>
+    </div>
+    <div class="divider"></div>
+    <div class="section-block">
+      <div class="section-title">The Financial Story</div>
+      <div class="section-content">${esc(d.financial_story)}</div>
+    </div>`;
+
+  document.getElementById('rOutput').innerHTML = html;
+  document.getElementById('resultsView').classList.add('active');
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function restart() {
+  document.getElementById('resultsView').classList.remove('active');
+  document.getElementById('formView').style.display = 'block';
+  document.getElementById('rOutput').innerHTML = '';
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
